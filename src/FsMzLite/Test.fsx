@@ -1,14 +1,14 @@
 ﻿
 
-#r @"..\FsMzLite\bin\Debug\MzLite.dll"
-#r @"..\FsMzLite\bin\Debug\MzLite.Wiff.dll"
-#r @"..\FsMzLite\bin\Debug\MzLite.SQL.dll"
-#r @"..\FsMzLite\bin\Debug\FsMzLite.dll"
-#r @"..\FsMzLite\bin\Debug\Clearcore2.Muni.dll"
-#r @"..\FsMzLite\bin\Debug\Clearcore2.Data.dll"
-#r @"..\FsMzLite\bin\Debug\Clearcore2.Data.CommonInterfaces.dll"
-#r @"..\FsMzLite\bin\Debug\Clearcore2.Data.AnalystDataProvider.dll"
-#r @"..\FsMzLite\bin\Debug\Newtonsoft.Json.dll"
+#r @"..\FsMzLite\bin\Release\MzLite.dll"
+#r @"..\FsMzLite\bin\Release\MzLite.Wiff.dll"
+#r @"..\FsMzLite\bin\Release\MzLite.SQL.dll"
+#r @"..\FsMzLite\bin\Release\FsMzLite.dll"
+#r @"..\FsMzLite\bin\Release\Clearcore2.Muni.dll"
+#r @"..\FsMzLite\bin\Release\Clearcore2.Data.dll"
+#r @"..\FsMzLite\bin\Release\Clearcore2.Data.CommonInterfaces.dll"
+#r @"..\FsMzLite\bin\Release\Clearcore2.Data.AnalystDataProvider.dll"
+#r @"..\FsMzLite\bin\Release\Newtonsoft.Json.dll"
 
 
 open System
@@ -44,18 +44,19 @@ let createMzLiteHelper (runID:string) (path:string) (spectrum:seq<MassSpectrum>)
 
 
 let fileDir = __SOURCE_DIRECTORY__
-let wiffFilePath = @"C:\Users\Student\source\repos\wiffTestFiles\20171129 FW LWagg001.wiff"
+let wiffFilePath = @"D:\Users\Patrick\Desktop\BioInformatik\MzLiteTestFiles\WiffTestFiles\20180301_MS_JT88mutID122.wiff"
 let licensePath = sprintf @"%s" (fileDir + "\License\Clearcore2.license.xml")
 
-let wiffObject = new WiffFileReader(wiffFilePath, licensePath)
 
-#time
-let massSpectra = 
-    wiffObject.Model.Runs
-    |> Seq.collect (fun run -> getMassSpectraBy wiffObject run.ID)
+let getWiffFileReader (path:string) =
+    new WiffFileReader(path, licensePath)
+
+let getMassSpectra (wiffFileReader:WiffFileReader) =
+    wiffFileReader.Model.Runs
+    |> Seq.collect (fun run -> wiffFileReader.ReadMassSpectra run.ID)
 
 let getPeak1DArrays (wiffFileReader:WiffFileReader) =
-    massSpectra
+    Seq.take 2000 (getMassSpectra wiffFileReader)
     |> Seq.map (fun spectrum -> wiffFileReader.ReadSpectrumPeaks spectrum.ID)
 
 let getMzLiteHelper (path:string) =
@@ -79,25 +80,45 @@ let getMzLiteHelper (path:string) =
 //    bn.Commit()
 //    bn.Dispose()
 
-let insertIntoDB (helper:MzLiteHelper) =
+//let insertIntoDB (helper:MzLiteHelper) =
+//    let mzLiteSQL = new MzLiteSQL(helper.Path + ".mzlite")
+//    mzLiteSQL |> ignore
+//    let bn = mzLiteSQL.BeginTransaction()
+//    Seq.map2 (fun (spectrum:MassSpectrum) (peak:Peak1DArray) -> mzLiteSQL.Insert(helper.RunID, spectrum, peak)) (Seq.take 1000 helper.MassSpectrum) (Seq.take 1000 helper.Peaks)
+//    |> Seq.length |> ignore
+//    bn.Commit()
+//    bn.Dispose()
+
+let insertIntoDB (amount:int) (helper:MzLiteHelper) =
     let mzLiteSQL = new MzLiteSQL(helper.Path + ".mzlite")
     mzLiteSQL |> ignore
     let bn = mzLiteSQL.BeginTransaction()
-    Seq.map2 (fun (spectrum:MassSpectrum) (peak:Peak1DArray) -> mzLiteSQL.Insert(helper.RunID, spectrum, peak)) (Seq.take 1000 helper.MassSpectrum) (Seq.take 1000 helper.Peaks)
+    Seq.map2 (fun spectrum (peak:Peak1DArray) -> mzLiteSQL.Insert(helper.RunID, spectrum, peak)) (Seq.take amount helper.MassSpectrum) (Seq.take amount helper.Peaks)
     |> Seq.length |> ignore
     bn.Commit()
     bn.Dispose()
 
+#time
+let wiffFileReader =
+    getWiffFileReader wiffFilePath
 
-let peak1DArrays = getPeak1DArrays wiffObject
+//let MassSpectra =
+//    getMassSpectra wiffFileReader
+
+//Seq.length MassSpectra
+
+//let peak1DArrays =
+//    getPeak1DArrays wiffFileReader
 
 //Seq.length peak1DArrays
 
 let insertDB =
     getMzLiteHelper wiffFilePath
-    |> (fun wiffFileReader -> insertIntoDB wiffFileReader)
+    |> (fun wiffFileReader -> insertIntoDB 5000 wiffFileReader)
 
 //let helper =
 //    getMzLiteHelper wiffFilePath
 
 //Seq.item 0 helper.Peaks
+
+1+1
