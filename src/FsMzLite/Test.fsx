@@ -56,7 +56,7 @@ let getMassSpectra (wiffFileReader:WiffFileReader) =
     |> Seq.collect (fun run -> wiffFileReader.ReadMassSpectra run.ID)
 
 let getPeak1DArrays (wiffFileReader:WiffFileReader) =
-    Seq.take 2000 (getMassSpectra wiffFileReader)
+    (getMassSpectra wiffFileReader)
     |> Seq.map (fun spectrum -> wiffFileReader.ReadSpectrumPeaks spectrum.ID)
 
 let getMzLiteHelper (path:string) =
@@ -102,10 +102,10 @@ let insertIntoDB (amount:int) (helper:MzLiteHelper) =
 let wiffFileReader =
     getWiffFileReader wiffFilePath
 
-//let MassSpectra =
-//    getMassSpectra wiffFileReader
+let MassSpectra =
+    getMassSpectra wiffFileReader
 
-//Seq.length MassSpectra
+Seq.length MassSpectra
 
 //let peak1DArrays =
 //    getPeak1DArrays wiffFileReader
@@ -114,7 +114,7 @@ let wiffFileReader =
 
 let insertDB =
     getMzLiteHelper wiffFilePath
-    |> (fun wiffFileReader -> insertIntoDB 5000 wiffFileReader)
+    |> (fun wiffFileReader -> insertIntoDB 100 wiffFileReader)
 
 //let helper =
 //    getMzLiteHelper wiffFilePath
