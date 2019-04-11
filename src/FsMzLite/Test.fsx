@@ -24,6 +24,7 @@ open MzLite.Json
 open MzLite.SQL
 open MzLite.Wiff
 open FsMzLite.AccessMassSpectrum
+open FsMzLite.AccessDB
 
 
 type MzLiteHelper =
@@ -98,27 +99,39 @@ let insertIntoDB (amount:int) (helper:MzLiteHelper) =
     bn.Commit()
     bn.Dispose()
 
+
 #time
 let wiffFileReader =
     getWiffFileReader wiffFilePath
 
-let MassSpectra =
-    getMassSpectra wiffFileReader
+let helper =
+    getMzLiteHelper wiffFilePath
 
-Seq.length MassSpectra
+//let MassSpectra =
+//    getMassSpectra wiffFileReader
+
+//Seq.length MassSpectra
 
 //let peak1DArrays =
 //    getPeak1DArrays wiffFileReader
 
 //Seq.length peak1DArrays
 
-let insertDB =
-    getMzLiteHelper wiffFilePath
-    |> (fun wiffFileReader -> insertIntoDB 100 wiffFileReader)
+//let insertDB =
+//    getMzLiteHelper wiffFilePath
+//    |> (fun wiffFileReader -> insertIntoDB 5000 wiffFileReader)
 
 //let helper =
 //    getMzLiteHelper wiffFilePath
 
-//Seq.item 0 helper.Peaks
+
+let tests =
+    let mzLiteSQL = new MzLiteSQL(wiffFilePath + ".mzlite")
+    let bn = mzLiteSQL.BeginTransaction()
+    helper.MassSpectrum
+    |> Seq.map (fun spectrum -> insertMSSpectrum mzLiteSQL helper.RunID wiffFileReader false spectrum)
+
+tests
+|> Seq.length
 
 1+1
